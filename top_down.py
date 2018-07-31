@@ -22,6 +22,10 @@ class App:
     def update(self):
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
+
+        self.update_player()
+
+    def update_player(self):
         if pyxel.btn(pyxel.KEY_A):
             self.player_x = xclamp(self.player_x - self.speed)
             self.facing_left = True
@@ -37,9 +41,6 @@ class App:
                 self.heart = False
             else:
                 self.heart = True
-
-    def update_player(self):
-        pass
 
     def draw(self):
         pyxel.cls(5)

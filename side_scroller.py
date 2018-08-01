@@ -36,11 +36,12 @@ class App:
         pyxel.run(self.update, self.draw)
 
     def build_tilemap(self, map_file, layer):
-        height_in_tiles = pyxel.height // self.tile_size
+        l_num = pyxel.height // self.tile_size
         with open(map_file, 'r') as data:
             for line in data:
                 if layer in line.strip():
-                    return read_map_lines(data, height_in_tiles)
+                    return [[int(x) for x in l.strip().rstrip(',').split(',')] for l in islice(data, l_num)] # pylint: disable=C0301
+        return False
 
     def update_player(self):
         if pyxel.btn(pyxel.KEY_LEFT):

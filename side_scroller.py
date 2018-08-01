@@ -10,8 +10,8 @@ def xclamp(n):
 def yclamp(n):
     return max(min(144, n), 0)
 
-def read_map_lines(map_file, lines_to_read):
-    return [[int(x) for x in line.strip().rstrip(',').split(',')] for line in islice(map_file, lines_to_read)]
+def read_map_lines(map_file, l_num):
+    return [[int(x) for x in l.strip().rstrip(',').split(',')] for l in islice(map_file, l_num)]
 
 class App:
     def __init__(self):
@@ -42,12 +42,6 @@ class App:
                 if layer in line.strip():
                     return read_map_lines(data, height_in_tiles)
 
-    def update(self):
-        if pyxel.btnp(pyxel.KEY_ESCAPE):
-            pyxel.quit()
-
-        self.update_player()
-
     def update_player(self):
         if pyxel.btn(pyxel.KEY_LEFT):
             self.player_x = max(self.player_x - 2, 0)
@@ -59,17 +53,11 @@ class App:
         self.player_y += self.player_vy
         self.player_vy = min(self.player_vy + 1, 8)
 
-        if self.player_y > pyxel.height:
-            if self.player_is_alive:
-                self.player_is_alive = False
-                pyxel.play(2, 4)
+    def update(self):
+        if pyxel.btnp(pyxel.KEY_ESCAPE):
+            pyxel.quit()
 
-            if self.player_y > 600:
-                self.player_x = 72
-                self.player_y = -16
-                self.player_vy = 0
-                self.player_is_alive = True
-
+        self.update_player()
 
     def draw(self):
         pyxel.cls(12)

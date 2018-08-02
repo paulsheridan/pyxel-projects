@@ -10,13 +10,15 @@ class App:
         pyxel.image(0).load(0, 0, 'tileset.png')
 
         self.tile_size = 16
-        self.tilemap0 = Tilemap(self.build_tilemap('tileset.txt', 'layer 0'))
+        self.tilemap = Tilemap(self.build_tilemap('tileset.txt', 'layer 0'))
         # self.tilemap1 = Tilemap(self.build_tilemap('tileset.txt', 'layer 1'), True)
 
+        self.player_h = 12
+        self.player_w = 6
         self.player_x = 72
         self.player_y = -16
         self.player_vy = 0
-        self.player_block = None
+        self.player_block = None # remove after collision update
 
         pyxel.run(self.update, self.draw)
 
@@ -29,7 +31,7 @@ class App:
         return False
 
     def player_jump(self):
-        self.player_vy = min(self.player_vy, -8)
+        self.player_vy = min(self.player_vy, -6)
 
     def update_player(self):
         if pyxel.btn(pyxel.KEY_A):
@@ -40,23 +42,32 @@ class App:
             self.player_jump()
 
         self.player_y += self.player_vy
-        self.player_vy = min(self.player_vy + 1, 8)
+        self.player_vy = min(self.player_vy + 1, 6)
 
         self.check_collision()
 
     def check_collision(self):
-        tile_x = self.player_x // self.tile_size
-        x_mod = self.player_x % self.tile_size
-        tile_y = self.player_y // self.tile_size
-        y_mod = self.player_y % self.tile_size
+        player_bottom = self.player_y + self.player_h
+        player_right = self.player_x + self.player_w
 
-        # get player tile
-        if tile_y > (pyxel.height // self.tile_size) - 1 or tile_y <= -1:
-            self.player_block = -1
-        else:
-            self.player_block = self.tilemap0.matrix[tile_y][tile_x]
+        if self.player_y >= 0 and self.player_vy > 0:
+            for coord in [self.player_x, player_bottom], [player_right, player_bottom]:
+                coord_tile = [coord[0] // self.tile_size, (coord[1] + self.player_vy) // self.tile_size] # pylint: disable=C0301
+                if self.tilemap.matrix[coord_tile[1]][coord_tile[0]] != -1:
+                    self.player_vy = 0
+                    self.player_y = (coord_tile[1] * self.tile_size) - self.player_h
+                    break
 
-
+        # if tile_y > (pyxel.height // self.tile_size) - 1 or tile_y <= -1:
+        #     self.player_block = -1
+        # else:
+        #     self.player_block = self.tilemap0.matrix[tile_y][tile_x]
+        #
+        #     tile_below = self.tilemap0.matrix[tile_y + 1][tile_x]
+        #     if tile_below != -1:
+        #         self.player_vy = 0
+        #         self.player_y = tile_y * self.tile_size
+        #
 
     def update(self):
         if pyxel.btnp(pyxel.KEY_ESCAPE):
@@ -65,8 +76,8 @@ class App:
         self.update_player()
 
     def draw(self):
-        pyxel.cls(10)
-        for idy, arr in enumerate(self.tilemap0.matrix):
+        pyxel.cls(12)
+        for idy, arr in enumerate(self.tilemap.matrix):
             for idx, val in enumerate(arr):
                 if val != -1:
                     pyxel.blt(idx*self.tile_size, idy*self.tile_size, 0, val*16, 0, 16, 16)

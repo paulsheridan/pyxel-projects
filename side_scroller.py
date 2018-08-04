@@ -18,6 +18,7 @@ class App:
         self.player_w = 8
         self.player_x = 72
         self.player_y = -16
+        self.player_vx = 0
         self.player_vy = 0
         self.grounded = False
 
@@ -32,29 +33,60 @@ class App:
         return False
 
     def player_jump(self):
-        self.player_vy = min(self.player_vy, -10)
+        self.player_vy = -10
         self.grounded = False
 
-    def player_run(self):
-        pass
+    def player_run(self, m):
+        self.player_vx = 2 * m
+        if m == -1:
+            self.player_x = max(self.player_x + self.player_vx, 0)
+        else:
+            self.player_x = min(self.player_x + self.player_vx, pyxel.width - self.player_w)
 
     def update_player(self):
         if pyxel.btn(pyxel.KEY_A):
-            self.player_x = max(self.player_x - 2, 0)
+            self.player_run(-1)
         if pyxel.btn(pyxel.KEY_D):
-            self.player_x = min(self.player_x + 2, pyxel.width - 16)
+            self.player_run(1)
         if pyxel.btnp(pyxel.KEY_SPACE):
             if self.grounded:
                 self.player_jump()
 
+        # print('before: {}'.format(self.player_vy))
         self.player_y += self.player_vy
         self.player_vy = min(self.player_vy + 1, 8)
+        # print('after: {}'.format(self.player_vy))
 
         self.check_collision()
 
     def check_collision(self):
-        player_bottom = self.player_y + self.player_h
-        player_right = self.player_x + self.player_w
+        # player coordinates are base 0, so the distance right and down from the 0th element
+        # of the player sprite has to be decremented by 1
+        player_bottom = self.player_y + self.player_h - 1
+        player_right = self.player_x + self.player_w - 1
+
+        if self.player_vx < 0:
+            for coord in [self.player_x, self.player_y], [self.player_x, player_bottom]:
+                left_tile = [
+                    (coord[0] + self.player_vx) // self.tile_size,
+                    coord[1] // self.tile_size
+                ]
+                if self.tilemap.matrix[left_tile[1]][left_tile[0]] != -1:
+                    self.player_vx = 0
+                    self.player_x = (left_tile[0] * self.tile_size) + self.tile_size
+
+        elif self.player_vx > 0:
+            for coord in [player_right, self.player_y], [player_right, player_bottom]:
+                right_tile = [
+                    (coord[0] + self.player_vx) // self.tile_size,
+                    coord[1] // self.tile_size
+                ]
+                if self.tilemap.matrix[right_tile[1]][right_tile[0]] != -1:
+                    self.player_vx = 0
+                    self.player_x = (right_tile[0] * self.tile_size) - self.player_w
+
+        player_bottom = self.player_y + self.player_h - 1
+        player_right = self.player_x + self.player_w - 1
 
         if self.player_y >= 0 and self.player_vy > 0:
             for coord in [self.player_x, player_bottom], [player_right, player_bottom]:
@@ -72,9 +104,11 @@ class App:
 
         elif self.player_y >= 0 and self.player_vy < 0:
             for coord in [self.player_x, self.player_y], [player_right, self.player_y]:
-                ceiling_tile = [coord[0] // self.tile_size, (coord[1] - self.player_vy) // self.tile_size] # pylint: disable=C0301
+                ceiling_tile = [
+                    coord[0] // self.tile_size,
+                    (coord[1] + self.player_vy) // self.tile_size
+                ]
                 if self.tilemap.matrix[ceiling_tile[1]][ceiling_tile[0]] != -1:
-                    # import pdb; pdb.set_trace()
                     self.player_vy = 0
                     self.player_y = ceiling_tile[1] * self.tile_size + self.tile_size
                     break

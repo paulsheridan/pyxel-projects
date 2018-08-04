@@ -9,7 +9,7 @@ def yclamp(n):
 class App:
     def __init__(self):
         pyxel.init(240, 160, caption='test game')
-        pyxel.image(0).load(0, 0, 'test.png')
+        pyxel.image(0).load(0, 0, 'assets/test.png')
 
         self.speed = 2
         self.player_x = 100

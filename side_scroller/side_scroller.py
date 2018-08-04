@@ -52,10 +52,8 @@ class App:
             if self.grounded:
                 self.player_jump()
 
-        # print('before: {}'.format(self.player_vy))
         self.player_y += self.player_vy
         self.player_vy = min(self.player_vy + 1, 8)
-        # print('after: {}'.format(self.player_vy))
 
         self.check_collision()
 

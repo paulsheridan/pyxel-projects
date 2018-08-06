@@ -9,21 +9,16 @@ class App:
         pyxel.init(241, 160, caption='test game')
         pyxel.image(0).load(0, 0, 'assets/tile_test2.png')
         pyxel.image(1).load(0, 0, 'assets/anim_test2.png')
+        pyxel.image(2).load(0, 0, 'assets/bg_test2.png')
 
         self.tile_size = 16
         self.tilemap = Tilemap(self.build_tilemap('assets/map_test2.txt', 'layer 0'))
         self.tilemap1 = Tilemap(self.build_tilemap('assets/map_test2.txt', 'layer 1'), True)
         self.tilemap2 = Tilemap(self.build_tilemap('assets/map_test2.txt', 'layer 2'), True)
 
-        self.player_h = 11
-        self.player_w = 8
+        self.player = Player()
 
-        self.player_x = 72
-        self.player_y = -16
-        self.player_vx = 0
-        self.player_vy = 0
-        self.grounded = False
-
+        self.anim_w = 11
         self.zero_frame = 0
 
         pyxel.run(self.update, self.draw)
@@ -36,81 +31,74 @@ class App:
                     return [[int(x) for x in l.strip().rstrip(',').split(',')] for l in islice(data, l_num)] # pylint: disable=C0301
         return False
 
-    def player_jump(self):
-        self.player_vy = -10
-        self.grounded = False
-
-    def player_run(self, m):
-        self.player_vx = 2 * m
-        if m == -1:
-            self.player_x = max(self.player_x + self.player_vx, 0)
-        else:
-            self.player_x = min(self.player_x + self.player_vx, pyxel.width - self.player_w)
-
     def update_player(self):
         if pyxel.btn(pyxel.KEY_A):
-            self.player_run(-1)
+            self.player.run(-1)
         if pyxel.btn(pyxel.KEY_D):
-            self.player_run(1)
+            self.player.run(1)
+        # if pyxel.btn(pyxel.KEY_W):
+        #     pass
+        # if pyxel.btn(pyxel.KEY_S):
+        #     pass
         if pyxel.btnp(pyxel.KEY_SPACE):
-            if self.grounded:
-                self.player_jump()
+            if self.player.grounded:
+                self.player.jump()
 
-        self.player_y += self.player_vy
-        self.player_vy = min(self.player_vy + 1, 8)
+        self.player.y_pos += self.player.y_vel
+        self.player.y_vel = min(self.player.y_vel + 1, 8)
 
         self.check_collision()
 
     def check_collision(self):
         # player coordinates are base 0, so the distance right and down from the 0th element
         # of the player sprite has to be decremented by 1
-        player_bottom = self.player_y + self.player_h - 1
-        player_right = self.player_x + self.player_w - 1
+        player_bottom = self.player.y_pos + self.player.height - 1
+        player_right = self.player.x_pos + self.player.width - 1
 
-        if self.player_vx < 0:
-            for coord in [self.player_x, self.player_y], [self.player_x, player_bottom]:
+        if self.player.x_vel < 0:
+            for coord in [self.player.x_pos, self.player.y_pos], [self.player.x_pos, player_bottom]:
                 left_tile = [
-                    (coord[0] + self.player_vx) // self.tile_size,
+                    (coord[0] + self.player.x_vel) // self.tile_size,
                     coord[1] // self.tile_size
                 ]
                 if self.tilemap.matrix[left_tile[1]][left_tile[0]] != -1:
-                    self.player_x = (left_tile[0] * self.tile_size) + self.tile_size
+                    self.player.x_pos = (left_tile[0] * self.tile_size) + self.tile_size
 
-        elif self.player_vx > 0:
-            for coord in [player_right, self.player_y], [player_right, player_bottom]:
+        elif self.player.x_vel > 0:
+            for coord in [player_right, self.player.y_pos], [player_right, player_bottom]:
                 right_tile = [
-                    (coord[0] + self.player_vx) // self.tile_size,
+                    (coord[0] + self.player.x_vel) // self.tile_size,
                     coord[1] // self.tile_size
                 ]
                 if self.tilemap.matrix[right_tile[1]][right_tile[0]] != -1:
-                    self.player_x = (right_tile[0] * self.tile_size) - self.player_w
+                    self.player.x_pos = (right_tile[0] * self.tile_size) - self.player.width
 
-        player_bottom = self.player_y + self.player_h - 1
-        player_right = self.player_x + self.player_w - 1
+        player_bottom = self.player.y_pos + self.player.height - 1
+        player_right = self.player.x_pos + self.player.width - 1
 
-        if self.player_y >= 0 and self.player_vy > 0:
-            for coord in [self.player_x, player_bottom], [player_right, player_bottom]:
+        if self.player.y_pos >= 0 and self.player.y_vel > 0:
+            for coord in [self.player.x_pos, player_bottom], [player_right, player_bottom]:
                 floor_tile = [
                     coord[0] // self.tile_size,
-                    (coord[1] + self.player_vy) // self.tile_size
+                    (coord[1] + self.player.y_vel) // self.tile_size
                 ]
                 if self.tilemap.matrix[floor_tile[1]][floor_tile[0]] != -1:
-                    self.player_vy = 0
-                    self.player_y = (floor_tile[1] * self.tile_size) - self.player_h
-                    self.grounded = True
+                    self.player.y_vel = 0
+                    self.player.y_pos = (floor_tile[1] * self.tile_size) - self.player.height
+                    self.player.grounded = True
                     break
                 else:
-                    self.grounded = False
+                    self.player.grounded = False
 
-        elif self.player_y >= 0 and self.player_vy < 0:
-            for coord in [self.player_x, self.player_y], [player_right, self.player_y]:
+        elif self.player.y_pos >= 0 and self.player.y_vel < 0:
+            for coord in [self.player.x_pos, self.player.y_pos], [player_right, self.player.y_pos]:
                 ceiling_tile = [
                     coord[0] // self.tile_size,
-                    (coord[1] + self.player_vy) // self.tile_size
+                    (coord[1] + self.player.y_vel) // self.tile_size
                 ]
                 if self.tilemap.matrix[ceiling_tile[1]][ceiling_tile[0]] != -1:
-                    self.player_vy = 0
-                    self.player_y = ceiling_tile[1] * self.tile_size + self.tile_size
+                    self.player.y_vel = 0
+                    self.player.y_pos = ceiling_tile[1] * self.tile_size + self.tile_size
                     break
 
     def render_tiles(self, tilemap, colkey):
@@ -118,35 +106,34 @@ class App:
         for idy, arr in enumerate(tilemap.matrix):
             for idx, val in enumerate(arr):
                 if val != -1:
-                    tile_x = idx*self.tile_size
-                    tile_y = idy*self.tile_size
+                    x = idx*self.tile_size
+                    y = idy*self.tile_size
                     sx = (val % self.tile_size) * self.tile_size
                     sy = (val // (256 // self.tile_size)) * self.tile_size
-                    pyxel.blt(tile_x, tile_y, 0, sx, sy, self.tile_size, self.tile_size, colkey)
+                    pyxel.blt(x, y, 0, sx, sy, self.tile_size, self.tile_size, colkey)
 
     def render_player(self):
-        frame_w = 11
-        frame_x = frame_w * 7
-        if not self.grounded:
-            if self.player_vy >= 0:
-                frame_x = frame_w * 13
+        frame_x = self.anim_w * 7
+        if not self.player.grounded:
+            if self.player.y_vel >= 0:
+                frame_x = self.anim_w * 13
             else:
-                frame_x = frame_w * 12
+                frame_x = self.anim_w * 12
         else:
             if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.KEY_D):
                 if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.KEY_D):
                     self.zero_frame = pyxel.frame_count
-                frame_x = frame_w * (((pyxel.frame_count - self.zero_frame) // 4) % 6)
-        if self.player_vx > 0:
+                frame_x = self.anim_w * (((pyxel.frame_count - self.zero_frame) // 4) % 6)
+        if self.player.x_vel > 0:
             otn = -1
         else:
             otn = 1
 
         pyxel.blt(
-            self.player_x-(2*otn),
-            self.player_y-5, 1, frame_x, 16,
-            otn*self.player_w+(3*otn),
-            self.player_h+5, 1
+            self.player.x_pos-(2*otn),
+            self.player.y_pos-5, 1, frame_x, 16,
+            otn*self.player.width+(3*otn),
+            self.player.height+5, 1
         )
 
     def update(self):
@@ -157,10 +144,34 @@ class App:
 
     def draw(self):
         pyxel.cls(1)
+        pyxel.blt(0, 0, 2, 0, 0, 240, 100, 1)
         self.render_tiles(self.tilemap, 1)
         self.render_tiles(self.tilemap2, 1)
         self.render_player()
         self.render_tiles(self.tilemap1, 1)
 
+
+class Player():
+    def __init__(self):
+        self.height = 11
+        self.width = 8
+
+        self.x_pos = 72
+        self.y_pos = -16
+        self.x_vel = 0
+        self.y_vel = 0
+        self.grounded = False
+
+
+    def jump(self):
+        self.y_vel = -10
+        self.grounded = False
+
+    def run(self, m):
+        self.x_vel = 2 * m
+        if m == -1:
+            self.x_pos = max(self.x_pos + self.x_vel, 0)
+        else:
+            self.x_pos = min(self.x_pos + self.x_vel, pyxel.width - self.width)
 
 App()

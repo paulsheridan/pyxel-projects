@@ -168,7 +168,7 @@ class Player():
             otn = 1
 
         pyxel.blt(self.x_pos-(1), self.y_pos-5, 1, frame_x, 16, otn*self.width+(3*otn), self.height+5, 1)
-        pyxel.rectb(self.x_pos, self.y_pos, self.x_pos + self.width, self.y_pos + self.height, 7)
+        # pyxel.rectb(self.x_pos, self.y_pos, self.x_pos + self.width, self.y_pos + self.height, 7)
 
 
 class Tilemap():

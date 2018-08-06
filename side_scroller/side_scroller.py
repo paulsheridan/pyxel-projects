@@ -27,7 +27,10 @@ class App:
         with open(map_file, 'r') as data:
             for line in data:
                 if layer in line.strip():
-                    return [[int(x) for x in l.strip().rstrip(',').split(',')] for l in islice(data, l_num)] # pylint: disable=C0301
+                    return [
+                        [int(x) for x in l.strip().rstrip(',').split(',')]
+                        for l in islice(data, l_num)
+                    ]
         return False
 
     def update_player(self):
@@ -123,6 +126,10 @@ class App:
                 if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.KEY_D):
                     self.zero_frame = pyxel.frame_count
                 frame_x = self.anim_w * (((pyxel.frame_count - self.zero_frame) // 4) % 6)
+            else:
+                if pyxel.btnr(pyxel.KEY_A) or pyxel.btnr(pyxel.KEY_D):
+                    self.zero_frame = pyxel.frame_count
+                frame_x = self.anim_w * (6 + ((pyxel.frame_count - self.zero_frame) // 4) % 6)
         if self.player.x_vel > 0:
             otn = -1
         else:

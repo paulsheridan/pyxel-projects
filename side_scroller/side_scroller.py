@@ -17,9 +17,6 @@ class App:
 
         self.player = Player()
 
-        self.anim_w = 11
-        self.zero_frame = 0
-
         pyxel.run(self.update, self.draw)
 
     def build_tilemap(self, map_file, layer):
@@ -32,24 +29,6 @@ class App:
                         for l in islice(data, l_num)
                     ]
         return False
-
-    def update_player(self):
-        if pyxel.btn(pyxel.KEY_A):
-            self.player.run(-1)
-        if pyxel.btn(pyxel.KEY_D):
-            self.player.run(1)
-        # if pyxel.btn(pyxel.KEY_W):
-        #     pass
-        # if pyxel.btn(pyxel.KEY_S):
-        #     pass
-        if pyxel.btnp(pyxel.KEY_SPACE):
-            if self.player.grounded:
-                self.player.jump()
-
-        self.player.y_pos += self.player.y_vel
-        self.player.y_vel = min(self.player.y_vel + 1, 8)
-
-        self.check_collision()
 
     def check_collision(self):
         # player coordinates are base 0, so the distance right and down from the 0th element
@@ -114,46 +93,32 @@ class App:
                     sy = (val // (256 // self.tile_size)) * self.tile_size
                     pyxel.blt(x, y, 0, sx, sy, self.tile_size, self.tile_size, colkey)
 
-    def render_player(self):
-        frame_x = self.anim_w * 7
-        if not self.player.grounded:
-            if self.player.y_vel >= 0:
-                frame_x = self.anim_w * 13
-            else:
-                frame_x = self.anim_w * 12
-        else:
-            if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.KEY_D):
-                if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.KEY_D):
-                    self.zero_frame = pyxel.frame_count
-                frame_x = self.anim_w * (((pyxel.frame_count - self.zero_frame) // 4) % 6)
-            else:
-                if pyxel.btnr(pyxel.KEY_A) or pyxel.btnr(pyxel.KEY_D):
-                    self.zero_frame = pyxel.frame_count
-                frame_x = self.anim_w * (6 + ((pyxel.frame_count - self.zero_frame) // 4) % 6)
-        if self.player.x_vel > 0:
-            otn = -1
-        else:
-            otn = 1
-
-        pyxel.blt(
-            self.player.x_pos-(2*otn),
-            self.player.y_pos-5, 1, frame_x, 16,
-            otn*self.player.width+(3*otn),
-            self.player.height+5, 1
-        )
-
     def update(self):
+        if pyxel.btn(pyxel.KEY_A):
+            self.player.run(-1)
+        if pyxel.btn(pyxel.KEY_D):
+            self.player.run(1)
+        # if pyxel.btn(pyxel.KEY_W):
+        #     pass
+        # if pyxel.btn(pyxel.KEY_S):
+        #     pass
+        if pyxel.btnp(pyxel.KEY_SPACE):
+            if self.player.grounded:
+                self.player.jump()
         if pyxel.btnp(pyxel.KEY_ESCAPE):
             pyxel.quit()
 
-        self.update_player()
+        self.player.y_pos += self.player.y_vel
+        self.player.y_vel = min(self.player.y_vel + 1, 8)
+
+        self.check_collision()
 
     def draw(self):
         pyxel.cls(1)
         pyxel.blt(0, 0, 2, 0, 0, 240, 100, 1)
         self.render_tiles(self.tilemap, 1)
         self.render_tiles(self.tilemap2, 1)
-        self.render_player()
+        self.player.render()
         self.render_tiles(self.tilemap1, 1)
 
 
@@ -168,6 +133,9 @@ class Player():
         self.y_vel = 0
         self.grounded = False
 
+        self.anim_w = 11
+        self.zero_frame = 0
+
 
     def jump(self):
         self.y_vel = -10
@@ -179,6 +147,29 @@ class Player():
             self.x_pos = max(self.x_pos + self.x_vel, 0)
         else:
             self.x_pos = min(self.x_pos + self.x_vel, pyxel.width - self.width)
+
+    def render(self):
+        frame_x = self.anim_w * 7
+        if not self.grounded:
+            if self.y_vel >= 0:
+                frame_x = self.anim_w * 13
+            else:
+                frame_x = self.anim_w * 12
+        else:
+            if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.KEY_D):
+                if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.KEY_D):
+                    self.zero_frame = pyxel.frame_count
+                frame_x = self.anim_w * (((pyxel.frame_count - self.zero_frame) // 4) % 6)
+            else:
+                if pyxel.btnr(pyxel.KEY_A) or pyxel.btnr(pyxel.KEY_D):
+                    self.zero_frame = pyxel.frame_count
+                frame_x = self.anim_w * (6 + ((pyxel.frame_count - self.zero_frame) // 4) % 6)
+        if self.x_vel > 0:
+            otn = -1
+        else:
+            otn = 1
+
+        pyxel.blt(self.x_pos-(2*otn), self.y_pos-5, 1, frame_x, 16, otn*self.width+(3*otn), self.height+5, 1)
 
 
 class Tilemap():

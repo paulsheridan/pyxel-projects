@@ -1,3 +1,4 @@
+import os
 import pyxel
 
 from itertools import islice
@@ -6,14 +7,16 @@ from itertools import islice
 class App:
     def __init__(self):
         pyxel.init(241, 160, caption='test game')
-        pyxel.image(0).load(0, 0, 'assets/tile_test2.png')
-        pyxel.image(1).load(0, 0, 'assets/anim_test2.png')
-        pyxel.image(2).load(0, 0, 'assets/bg_test2.png')
+        assets = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), 'assets'))
+        print(assets)
+        pyxel.image(0).load(0, 0, '{}/tile_test2.png'.format(assets))
+        pyxel.image(1).load(0, 0, '{}/anim_test2.png'.format(assets))
+        pyxel.image(2).load(0, 0, '{}/bg_test2.png'.format(assets))
 
         self.tile_size = 16
-        self.tilemap = Tilemap(self.build_tilemap('assets/map_test2.txt', 'layer 0'))
-        self.tilemap1 = Tilemap(self.build_tilemap('assets/map_test2.txt', 'layer 1'), True)
-        self.tilemap2 = Tilemap(self.build_tilemap('assets/map_test2.txt', 'layer 2'), True)
+        self.tilemap = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'layer 0'))
+        self.tilemap1 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'layer 1'), True)
+        self.tilemap2 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'layer 2'), True)
 
         self.player = Player()
 
@@ -98,14 +101,6 @@ class App:
             self.player.run(-1)
         if pyxel.btn(pyxel.KEY_D):
             self.player.run(1)
-        # if pyxel.btn(pyxel.KEY_I):
-        #     self.player.shift_u += 1
-        # if pyxel.btn(pyxel.KEY_O):
-        #     self.player.shift_u -= 1
-        # if pyxel.btn(pyxel.KEY_K):
-        #     self.player.shift_r += 1
-        # if pyxel.btn(pyxel.KEY_L):
-        #     self.player.shift_r -= 1
         if pyxel.btnp(pyxel.KEY_SPACE):
             if self.player.grounded:
                 self.player.jump()
@@ -140,9 +135,6 @@ class Player():
         self.anim_w = 11
         self.zero_frame = 0
 
-        # self.shift_u = 0
-        # self.shift_r = 0
-
     def jump(self):
         self.y_vel = -10
         self.grounded = False
@@ -176,10 +168,7 @@ class Player():
             otn = 1
 
         pyxel.blt(self.x_pos-(1), self.y_pos-5, 1, frame_x, 16, otn*self.width+(3*otn), self.height+5, 1)
-        # pyxel.rectb(self.x_pos, self.y_pos, self.x_pos + self.width, self.y_pos + self.height, 7)
-
-        # pyxel.text(0, 0, 'shift_u:{}'.format(self.shift_u), 7)
-        # pyxel.text(60, 0, 'shift_r:{}'.format(self.shift_r), 7)
+        pyxel.rectb(self.x_pos, self.y_pos, self.x_pos + self.width, self.y_pos + self.height, 7)
 
 
 class Tilemap():

@@ -1,7 +1,6 @@
 import pyxel
 
 from itertools import islice
-from tilemap import Tilemap
 
 
 class App:
@@ -173,5 +172,16 @@ class Player():
             self.x_pos = max(self.x_pos + self.x_vel, 0)
         else:
             self.x_pos = min(self.x_pos + self.x_vel, pyxel.width - self.width)
+
+
+class Tilemap():
+    def __init__(self, matrix, mutable=False):
+        self.matrix = matrix
+        self.mutable = mutable
+
+    def update_tile(self, x, y, val):
+        if self.mutable:
+            self.matrix[x][y] = val
+
 
 App()

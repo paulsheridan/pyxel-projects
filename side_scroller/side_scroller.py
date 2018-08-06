@@ -98,10 +98,14 @@ class App:
             self.player.run(-1)
         if pyxel.btn(pyxel.KEY_D):
             self.player.run(1)
-        # if pyxel.btn(pyxel.KEY_W):
-        #     pass
-        # if pyxel.btn(pyxel.KEY_S):
-        #     pass
+        # if pyxel.btn(pyxel.KEY_I):
+        #     self.player.shift_u += 1
+        # if pyxel.btn(pyxel.KEY_O):
+        #     self.player.shift_u -= 1
+        # if pyxel.btn(pyxel.KEY_K):
+        #     self.player.shift_r += 1
+        # if pyxel.btn(pyxel.KEY_L):
+        #     self.player.shift_r -= 1
         if pyxel.btnp(pyxel.KEY_SPACE):
             if self.player.grounded:
                 self.player.jump()
@@ -136,6 +140,8 @@ class Player():
         self.anim_w = 11
         self.zero_frame = 0
 
+        # self.shift_u = 0
+        # self.shift_r = 0
 
     def jump(self):
         self.y_vel = -10
@@ -146,7 +152,7 @@ class Player():
         if m == -1:
             self.x_pos = max(self.x_pos + self.x_vel, 0)
         else:
-            self.x_pos = min(self.x_pos + self.x_vel, pyxel.width - self.width)
+            self.x_pos = min(self.x_pos + self.x_vel, pyxel.width - self.width - 4)
 
     def render(self):
         frame_x = self.anim_w * 7
@@ -169,7 +175,11 @@ class Player():
         else:
             otn = 1
 
-        pyxel.blt(self.x_pos-(2*otn), self.y_pos-5, 1, frame_x, 16, otn*self.width+(3*otn), self.height+5, 1)
+        pyxel.blt(self.x_pos-(1), self.y_pos-5, 1, frame_x, 16, otn*self.width+(3*otn), self.height+5, 1)
+        # pyxel.rectb(self.x_pos, self.y_pos, self.x_pos + self.width, self.y_pos + self.height, 7)
+
+        # pyxel.text(0, 0, 'shift_u:{}'.format(self.shift_u), 7)
+        # pyxel.text(60, 0, 'shift_r:{}'.format(self.shift_r), 7)
 
 
 class Tilemap():

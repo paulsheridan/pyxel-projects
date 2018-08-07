@@ -6,7 +6,7 @@ from itertools import islice
 
 class App:
     def __init__(self):
-        pyxel.init(241, 160, caption='test game')
+        pyxel.init(240, 160, caption='test game')
 
         self.tile_size = 16
         self.offset = 0
@@ -48,6 +48,8 @@ class App:
                     (coord[0] + self.player.x_vel) // self.tile_size,
                     coord[1] // self.tile_size
                 ]
+                if left_tile[1] < 0:
+                    break
                 if self.tilemap.matrix[left_tile[1]][left_tile[0]] != -1:
                     self.player.x_pos = (left_tile[0] * self.tile_size) + self.tile_size - self.offset
 
@@ -57,6 +59,8 @@ class App:
                     (coord[0] + self.player.x_vel) // self.tile_size,
                     coord[1] // self.tile_size
                 ]
+                if right_tile[1] < 0:
+                    break
                 if self.tilemap.matrix[right_tile[1]][right_tile[0]] != -1:
                     self.player.x_pos = (right_tile[0] * self.tile_size) - self.player.width - self.offset
 
@@ -84,6 +88,8 @@ class App:
                     coord[0] // self.tile_size,
                     (coord[1] + self.player.y_vel) // self.tile_size
                 ]
+                if ceiling_tile[1] < 0:
+                    break
                 if self.tilemap.matrix[ceiling_tile[1]][ceiling_tile[0]] != -1:
                     self.player.y_vel = 0
                     self.player.y_pos = ceiling_tile[1] * self.tile_size + self.tile_size
@@ -156,7 +162,7 @@ class Player():
         if m == -1:
             self.x_pos = max(self.x_pos + self.x_vel, 0)
         else:
-            self.x_pos = min(self.x_pos + self.x_vel, pyxel.width - self.width - 4)
+            self.x_pos = min(self.x_pos + self.x_vel, pyxel.width - self.width - 6)
 
     def render(self):
         frame_x = self.anim_w * 7

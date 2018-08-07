@@ -20,7 +20,7 @@ class App:
 
         self.player = Player()
 
-        self.tile_offset = 0
+        self.offset = 0
 
         pyxel.run(self.update, self.draw)
 
@@ -36,16 +36,20 @@ class App:
         # player coordinates are base 0, so the distance right and down from the 0th element
         # of the player sprite has to be decremented by 1
         player_bottom = self.player.y_pos + self.player.height - 1
-        player_right = self.player.x_pos + self.player.width - 1
+        player_right = self.player.x_pos + self.offset + self.player.width - 1
+        player_left = self.player.x_pos + self.offset
+
+        base_offset = self.offset // self.tile_size
+        mod_offset = self.offset % self.tile_size
 
         if self.player.x_vel < 0:
-            for coord in [self.player.x_pos, self.player.y_pos], [self.player.x_pos, player_bottom]:
+            for coord in [player_left, self.player.y_pos], [player_left, player_bottom]:
                 left_tile = [
                     (coord[0] + self.player.x_vel) // self.tile_size,
                     coord[1] // self.tile_size
                 ]
                 if self.tilemap.matrix[left_tile[1]][left_tile[0]] != -1:
-                    self.player.x_pos = (left_tile[0] * self.tile_size) + self.tile_size
+                    self.player.x_pos = (left_tile[0] * self.tile_size) + self.tile_size - self.offset
 
         elif self.player.x_vel > 0:
             for coord in [player_right, self.player.y_pos], [player_right, player_bottom]:
@@ -54,13 +58,14 @@ class App:
                     coord[1] // self.tile_size
                 ]
                 if self.tilemap.matrix[right_tile[1]][right_tile[0]] != -1:
-                    self.player.x_pos = (right_tile[0] * self.tile_size) - self.player.width
+                    self.player.x_pos = (right_tile[0] * self.tile_size) - self.player.width - self.offset
 
         player_bottom = self.player.y_pos + self.player.height - 1
-        player_right = self.player.x_pos + self.player.width - 1
+        player_right = self.player.x_pos + self.offset + self.player.width - 1
+        player_left = self.player.x_pos + self.offset
 
         if self.player.y_pos >= 0 and self.player.y_vel > 0:
-            for coord in [self.player.x_pos, player_bottom], [player_right, player_bottom]:
+            for coord in [player_left, player_bottom], [player_right, player_bottom]:
                 floor_tile = [
                     coord[0] // self.tile_size,
                     (coord[1] + self.player.y_vel) // self.tile_size
@@ -74,7 +79,7 @@ class App:
                     self.player.grounded = False
 
         elif self.player.y_pos >= 0 and self.player.y_vel < 0:
-            for coord in [self.player.x_pos, self.player.y_pos], [player_right, self.player.y_pos]:
+            for coord in [player_left, self.player.y_pos], [player_right, self.player.y_pos]:
                 ceiling_tile = [
                     coord[0] // self.tile_size,
                     (coord[1] + self.player.y_vel) // self.tile_size
@@ -86,14 +91,16 @@ class App:
 
     def render_tiles(self, tilemap, colkey):
         # render the tileset based on information in the tilemap and tileset files loaded on boot.
+        base_offset = self.offset // self.tile_size
+        mod_offset = self.offset % self.tile_size
         for idy, arr in enumerate(tilemap.matrix):
-            for idx, val in enumerate(arr):
+            for idx, val in enumerate(arr[base_offset:base_offset+16]):
                 if val != -1:
                     x = idx*self.tile_size
                     y = idy*self.tile_size
                     sx = (val % self.tile_size) * self.tile_size
                     sy = (val // (256 // self.tile_size)) * self.tile_size
-                    pyxel.blt(x, y, 0, sx, sy, self.tile_size, self.tile_size, colkey)
+                    pyxel.blt(x-mod_offset, y, 0, sx, sy, self.tile_size, self.tile_size, colkey)
 
     def update(self):
         if pyxel.btn(pyxel.KEY_A):
@@ -105,6 +112,10 @@ class App:
                 self.player.jump()
         if pyxel.btnp(pyxel.KEY_ESCAPE):
             pyxel.quit()
+        if pyxel.btn(pyxel.KEY_I):
+            self.offset = max(self.offset + 2, 0)
+        if pyxel.btn(pyxel.KEY_O):
+            self.offset = max(self.offset - 2, 0)
 
         self.player.y_pos += self.player.y_vel
         self.player.y_vel = min(self.player.y_vel + 1, 8)

@@ -7,18 +7,20 @@ from itertools import islice
 class App:
     def __init__(self):
         pyxel.init(241, 160, caption='test game')
+
         assets = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), 'assets'))
-        print(assets)
         pyxel.image(0).load(0, 0, '{}/tile_test2.png'.format(assets))
         pyxel.image(1).load(0, 0, '{}/anim_test2.png'.format(assets))
         pyxel.image(2).load(0, 0, '{}/bg_test2.png'.format(assets))
 
         self.tile_size = 16
-        self.tilemap = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'layer 0'))
-        self.tilemap1 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'layer 1'), True)
-        self.tilemap2 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'layer 2'), True)
+        self.tilemap = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'collision'))
+        self.tilemap1 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'foreground'), True)
+        self.tilemap2 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'background'), True)
 
         self.player = Player()
+
+        self.tile_offset = 0
 
         pyxel.run(self.update, self.draw)
 
@@ -27,11 +29,8 @@ class App:
         with open(map_file, 'r') as data:
             for line in data:
                 if layer in line.strip():
-                    return [
-                        [int(x) for x in l.strip().rstrip(',').split(',')]
-                        for l in islice(data, l_num)
-                    ]
-        return False
+                    return [[int(x) for x in l.strip().rstrip(',').split(',')]for l in islice(data, l_num)]
+        raise IndexError("Tilemap layer {} not found.  Please check tilemap file.".format(layer))
 
     def check_collision(self):
         # player coordinates are base 0, so the distance right and down from the 0th element
@@ -115,10 +114,10 @@ class App:
     def draw(self):
         pyxel.cls(1)
         pyxel.blt(0, 0, 2, 0, 0, 240, 100, 1)
-        self.render_tiles(self.tilemap, 1)
         self.render_tiles(self.tilemap2, 1)
         self.player.render()
         self.render_tiles(self.tilemap1, 1)
+        self.render_tiles(self.tilemap, 1)
 
 
 class Player():

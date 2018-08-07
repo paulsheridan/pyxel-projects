@@ -8,19 +8,19 @@ class App:
     def __init__(self):
         pyxel.init(241, 160, caption='test game')
 
+        self.tile_size = 16
+        self.offset = 0
+
         assets = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), 'assets'))
         pyxel.image(0).load(0, 0, '{}/tile_test2.png'.format(assets))
         pyxel.image(1).load(0, 0, '{}/anim_test2.png'.format(assets))
         pyxel.image(2).load(0, 0, '{}/bg_test2.png'.format(assets))
 
-        self.tile_size = 16
         self.tilemap = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'collision'))
         self.tilemap1 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'foreground'), True)
         self.tilemap2 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'background'), True)
 
         self.player = Player()
-
-        self.offset = 0
 
         pyxel.run(self.update, self.draw)
 
@@ -104,18 +104,20 @@ class App:
 
     def update(self):
         if pyxel.btn(pyxel.KEY_A):
-            self.player.run(-1)
+            if self.offset > 0 and self.player.x_pos < pyxel.width // 2:
+                self.offset += self.player.x_vel
+            else:
+                self.player.run(-1)
         if pyxel.btn(pyxel.KEY_D):
-            self.player.run(1)
+            if self.offset < pyxel.width and self.player.x_pos > pyxel.width // 2:
+                self.offset += self.player.x_vel
+            else:
+                self.player.run(1)
         if pyxel.btnp(pyxel.KEY_SPACE):
             if self.player.grounded:
                 self.player.jump()
         if pyxel.btnp(pyxel.KEY_ESCAPE):
             pyxel.quit()
-        if pyxel.btn(pyxel.KEY_I):
-            self.offset = max(self.offset + 2, 0)
-        if pyxel.btn(pyxel.KEY_O):
-            self.offset = max(self.offset - 2, 0)
 
         self.player.y_pos += self.player.y_vel
         self.player.y_vel = min(self.player.y_vel + 1, 8)

@@ -10,7 +10,7 @@ def yclamp(n):
 
 class App:
     def __init__(self):
-        pyxel.init(160, 144, caption='test game')
+        pyxel.init(128, 128, caption='test game')
         pyxel.image(0).load(0, 0, 'assets/test.png')
 
         self.speed = 2
@@ -56,7 +56,7 @@ class App:
         #     pyxel.blt(self.player_x, self.player_y, 0, 0, 0, 16*m, 16, 5)
         # else:
         #     pyxel.blt(self.player_x, self.player_y, 0, 0, 16, 16*m, 16, 5)
-        pyxel.rect(self.player_x, self.player_y, self.player_x + 4, self.player_y + 4, 1)
+        pyxel.rect(self.player_x, self.player_y, self.player_x + 8, self.player_y + 8, 1)
 
 
 App()

@@ -10,6 +10,7 @@ class App:
 
         self.tile_size = 16
         self.offset_x = 0
+        self.offset_y = 0
         self.map_height = pyxel.height // self.tile_size
 
         assets = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), 'assets'))
@@ -80,16 +81,12 @@ class App:
                     break
 
         elif self.player.vx > 0:
-            print('checking right')
             for coord in [player_right, self.player.y], [player_right, player_bottom]:
-                print(coord)
                 right_tile = [
                     (coord[0] + self.player.vx) // self.tile_size,
                     coord[1] // self.tile_size
                 ]
-                print(right_tile)
                 if self.tilemap.matrix[right_tile[1]][right_tile[0]] != -1:
-                    print(self.tilemap.matrix[right_tile[1]][right_tile[0]])
                     self.player.x = (right_tile[0] * self.tile_size) - self.player.width - self.offset_x
                     break
 

@@ -1,14 +1,16 @@
 import pyxel
 
 def xclamp(n):
-    return max(min(224, n), 0)
+    # return max(min(144, n), 0)
+    return n
 
 def yclamp(n):
-    return max(min(144, n), 0)
+    # return max(min(128, n), 0)
+    return n
 
 class App:
     def __init__(self):
-        pyxel.init(240, 160, caption='test game')
+        pyxel.init(160, 144, caption='test game')
         pyxel.image(0).load(0, 0, 'assets/test.png')
 
         self.speed = 2
@@ -50,10 +52,11 @@ class App:
         else:
             m = -1
 
-        if self.heart == False:
-            pyxel.blt(self.player_x, self.player_y, 0, 0, 0, 16*m, 16, 5)
-        else:
-            pyxel.blt(self.player_x, self.player_y, 0, 0, 16, 16*m, 16, 5)
+        # if self.heart == False:
+        #     pyxel.blt(self.player_x, self.player_y, 0, 0, 0, 16*m, 16, 5)
+        # else:
+        #     pyxel.blt(self.player_x, self.player_y, 0, 0, 16, 16*m, 16, 5)
+        pyxel.rect(self.player_x, self.player_y, self.player_x + 4, self.player_y + 4, 1)
 
 
 App()

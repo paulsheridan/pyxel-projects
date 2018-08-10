@@ -37,6 +37,10 @@ class App:
                 self.player.jump()
         if pyxel.btnp(pyxel.KEY_ESCAPE):
             pyxel.quit()
+        if pyxel.btn(pyxel.KEY_T):
+            pyxel.pal(1, 7)
+        else:
+            pyxel.pal()
         if pyxel.btnp(pyxel.KEY_P):
             import pdb; pdb.set_trace()
 
@@ -52,6 +56,7 @@ class App:
         self.player.render()
         self.render_tiles(self.tilemap1, 1)
         self.render_tiles(self.tilemap, 1)
+        # pyxel.line(0, 0, pyxel.width, pyxel.height, 7)
 
     def build_tilemap(self, map_file, layer):
         matrix = []
@@ -86,7 +91,7 @@ class App:
                     coord[1] // self.tile_size
                 ]
                 if self.tilemap.matrix[left_tile[1]][left_tile[0]] != -1:
-                    self.player.x = (left_tile[0] * self.tile_size) + self.tile_size - self.offset_x
+                    self.player.x = (left_tile[0] * self.tile_size) + self.tile_size - self.offset_x - 1
                     break
 
         elif self.player.vx > 0:
@@ -96,7 +101,7 @@ class App:
                     coord[1] // self.tile_size
                 ]
                 if self.tilemap.matrix[right_tile[1]][right_tile[0]] != -1:
-                    self.player.x = (right_tile[0] * self.tile_size) - self.player.width - self.offset_x
+                    self.player.x = (right_tile[0] * self.tile_size) - self.player.width - self.offset_x + 1
                     break
 
     def y_collision(self):
@@ -154,15 +159,17 @@ class App:
             else:
                 self.player.x += self.player.vx
         self.player.vx = 0
+
         if self.player.vy < 0:
-            if self.offset_y > 0 and self.player.y < pyxel.height // 2:
+            if self.offset_y < abs(self.player.vy):
+                self.offset_y = 0
+                self.player.y += self.player.vy
+            elif self.offset_y > 0 and self.player.y < pyxel.height // 2:
                 self.offset_y += self.player.vy
             else:
                 self.player.y += self.player.vy
         elif self.player.vy > 0:
-            # TODO: pyxel.height here and pyxel.width above are incorrect and are likely the reason that bounds aren't
-            # working or are stopping too soon/too late
-            if self.offset_y < pyxel.height and self.player.y > pyxel.height // 2:
+            if self.offset_y < 80 and self.player.y > pyxel.height // 2:
                 self.offset_y += self.player.vy
             else:
                 self.player.y += self.player.vy

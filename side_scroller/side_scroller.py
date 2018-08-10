@@ -44,19 +44,15 @@ class App:
         if pyxel.btnp(pyxel.KEY_P):
             import pdb; pdb.set_trace()
 
-        self.x_collision()
-        self.y_collision()
-
         self.update_player()
 
     def draw(self):
         pyxel.cls(1)
         pyxel.blt(0, 0, 2, 0, 0, 240, 100, 1)
         self.render_tiles(self.tilemap2, 1)
+        self.render_tiles(self.tilemap, 1)
         self.player.render()
         self.render_tiles(self.tilemap1, 1)
-        self.render_tiles(self.tilemap, 1)
-        # pyxel.line(0, 0, pyxel.width, pyxel.height, 7)
 
     def build_tilemap(self, map_file, layer):
         matrix = []
@@ -91,17 +87,18 @@ class App:
                     coord[1] // self.tile_size
                 ]
                 if self.tilemap.matrix[left_tile[1]][left_tile[0]] != -1:
-                    self.player.x = (left_tile[0] * self.tile_size) + self.tile_size - self.offset_x - 1
+                    self.player.x = (left_tile[0] * self.tile_size) + self.tile_size - self.offset_x
+                    self.player.set_test(self.player.x, self.player.y, self.player.x + self.player.width, self.player.y + self.player.height)
                     break
 
-        elif self.player.vx > 0:
+        if self.player.vx > 0:
             for coord in [player_right, player_top], [player_right, player_bottom]:
                 right_tile = [
                     (coord[0] + self.player.vx) // self.tile_size,
                     coord[1] // self.tile_size
                 ]
                 if self.tilemap.matrix[right_tile[1]][right_tile[0]] != -1:
-                    self.player.x = (right_tile[0] * self.tile_size) - self.player.width - self.offset_x + 1
+                    self.player.x = (right_tile[0] * self.tile_size) - self.player.width - self.offset_x
                     break
 
     def y_collision(self):
@@ -117,6 +114,7 @@ class App:
                     self.player.vy = 0
                     self.player.y = (floor_tile[1] * self.tile_size) - self.player.height - self.offset_y
                     self.player.grounded = True
+                    # self.player.set_test(self.player.x, self.player.y, self.player.x + self.player.width, self.player.y + self.player.height)
                     break
                 else:
                     self.player.grounded = False
@@ -154,10 +152,12 @@ class App:
             else:
                 self.player.x += self.player.vx
         elif self.player.vx > 0:
-            if self.offset_x < pyxel.width and self.player.x > pyxel.width // 2:
+            # TODO: make this offset condition dynamic based on tilemap size
+            if self.offset_x < 320 and self.player.x > pyxel.width // 2:
                 self.offset_x += self.player.vx
             else:
                 self.player.x += self.player.vx
+        self.x_collision()
         self.player.vx = 0
 
         if self.player.vy < 0:
@@ -169,10 +169,12 @@ class App:
             else:
                 self.player.y += self.player.vy
         elif self.player.vy > 0:
+            # TODO: make this offset condition dynamic based on tilemap size
             if self.offset_y < 80 and self.player.y > pyxel.height // 2:
                 self.offset_y += self.player.vy
             else:
                 self.player.y += self.player.vy
+        self.y_collision()
 
         self.player.vy = min(self.player.vy + 1, 8)
 
@@ -181,6 +183,11 @@ class Player():
     def __init__(self):
         self.height = 11
         self.width = 8
+
+        self.test_left = 0
+        self.test_right = 0
+        self.test_up = 0
+        self.test_down = 0
 
         self.x = 72
         self.y = -16
@@ -193,12 +200,18 @@ class Player():
         self.zero_frame = 0
 
     def jump(self):
-        self.vy = -10
+        self.vy = -8
         self.grounded = False
 
     def run(self, direction):
         self.direction = direction
         self.vx = 2 * direction
+
+    def set_test(self, left, up, right, down):
+        self.test_left = left
+        self.test_right = right
+        self.test_up = up
+        self.test_down = down
 
     def render(self):
         frame_x = self.anim_w * 7
@@ -217,6 +230,7 @@ class Player():
                     self.zero_frame = pyxel.frame_count
                 frame_x = self.anim_w * (6 + ((pyxel.frame_count - self.zero_frame) // 4) % 6)
 
+        # TODO: make the rendering offset between player collision box and the image blt dynamic based on frame size and hit box size
         pyxel.blt(self.x-1, self.y-5, 1, frame_x, 16, -self.direction*self.width+(3*-self.direction), self.height+5, 1)
         pyxel.rectb(self.x, self.y, self.x + self.width - 1, self.y + self.height - 1, 7)
 

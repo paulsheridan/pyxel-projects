@@ -54,17 +54,24 @@ class App:
         self.render_tiles(self.tilemap, 1)
 
     def build_tilemap(self, map_file, layer):
+        matrix = []
         with open(map_file, 'r') as data:
             for line in data:
-                if layer in line.strip():
-                    return [[int(x) for x in l.strip().rstrip(',').split(',')]for l in islice(data, 15)]
-        raise IndexError("Tilemap layer {} not found.  Please check tilemap file.".format(layer))
+                if layer in line:
+                    break
+            for line_after in data:
+                if not line_after.strip():
+                    break
+                else:
+                    matrix.append([int(x) for x in line_after.strip().rstrip(',').split(',')])
+        return matrix
+
 
     def set_coll_defaults(self):
         # player coordinates are base 0, so the distance right and down from the 0th element
         # of the player sprite has to be decremented by 1
         player_top = self.player.y + self.offset_y
-        player_bottom = self.player.y + self.player.height + self.offset_y - 1
+        player_bottom = self.player.y + self.offset_y + self.player.height - 1
         player_right = self.player.x + self.offset_x + self.player.width - 1
         player_left = self.player.x + self.offset_x
         return player_top, player_bottom, player_right, player_left
@@ -153,12 +160,13 @@ class App:
             else:
                 self.player.y += self.player.vy
         elif self.player.vy > 0:
+            # TODO: pyxel.height here and pyxel.width above are incorrect and are likely the reason that bounds aren't
+            # working or are stopping too soon/too late
             if self.offset_y < pyxel.height and self.player.y > pyxel.height // 2:
                 self.offset_y += self.player.vy
             else:
                 self.player.y += self.player.vy
 
-        # self.player.y += self.player.vy
         self.player.vy = min(self.player.vy + 1, 8)
 
 
@@ -203,7 +211,7 @@ class Player():
                 frame_x = self.anim_w * (6 + ((pyxel.frame_count - self.zero_frame) // 4) % 6)
 
         pyxel.blt(self.x-1, self.y-5, 1, frame_x, 16, -self.direction*self.width+(3*-self.direction), self.height+5, 1)
-        # pyxel.rectb(self.x, self.y, self.x + self.width - 1, self.y + self.height - 1, 7)
+        pyxel.rectb(self.x, self.y, self.x + self.width - 1, self.y + self.height - 1, 7)
 
 
 class Tilemap():

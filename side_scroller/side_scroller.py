@@ -12,15 +12,16 @@ class App:
         self.offset_x = 0
         self.offset_y = 0
         self.map_height = pyxel.height // self.tile_size
+        self.map_width = pyxel.width // self.tile_size
 
         assets = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), 'assets'))
         pyxel.image(0).load(0, 0, '{}/tile_test2.png'.format(assets))
         pyxel.image(1).load(0, 0, '{}/anim_test2.png'.format(assets))
         pyxel.image(2).load(0, 0, '{}/bg_test2.png'.format(assets))
 
-        self.tilemap = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'collision'))
-        self.tilemap1 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'foreground'), True)
-        self.tilemap2 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'background'), True)
+        self.tilemap = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'layer 1'))
+        self.tilemap1 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'layer 2'), True)
+        self.tilemap2 = Tilemap(self.build_tilemap('{}/map_test2.txt'.format(assets), 'layer 0'), True)
 
         self.player = Player()
 
@@ -56,22 +57,23 @@ class App:
         with open(map_file, 'r') as data:
             for line in data:
                 if layer in line.strip():
-                    return [[int(x) for x in l.strip().rstrip(',').split(',')]for l in islice(data, self.map_height)]
+                    return [[int(x) for x in l.strip().rstrip(',').split(',')]for l in islice(data, 15)]
         raise IndexError("Tilemap layer {} not found.  Please check tilemap file.".format(layer))
 
     def set_coll_defaults(self):
         # player coordinates are base 0, so the distance right and down from the 0th element
         # of the player sprite has to be decremented by 1
-        player_bottom = self.player.y + self.player.height - 1
+        player_top = self.player.y + self.offset_y
+        player_bottom = self.player.y + self.player.height + self.offset_y - 1
         player_right = self.player.x + self.offset_x + self.player.width - 1
         player_left = self.player.x + self.offset_x
-        return player_bottom, player_right, player_left
+        return player_top, player_bottom, player_right, player_left
 
     def x_collision(self):
-        player_bottom, player_right, player_left = self.set_coll_defaults()
+        player_top, player_bottom, player_right, player_left = self.set_coll_defaults()
 
         if self.player.vx < 0:
-            for coord in [player_left, self.player.y], [player_left, player_bottom]:
+            for coord in [player_left, player_top], [player_left, player_bottom]:
                 left_tile = [
                     (coord[0] + self.player.vx) // self.tile_size,
                     coord[1] // self.tile_size
@@ -81,7 +83,7 @@ class App:
                     break
 
         elif self.player.vx > 0:
-            for coord in [player_right, self.player.y], [player_right, player_bottom]:
+            for coord in [player_right, player_top], [player_right, player_bottom]:
                 right_tile = [
                     (coord[0] + self.player.vx) // self.tile_size,
                     coord[1] // self.tile_size
@@ -91,7 +93,7 @@ class App:
                     break
 
     def y_collision(self):
-        player_bottom, player_right, player_left = self.set_coll_defaults()
+        player_top, player_bottom, player_right, player_left = self.set_coll_defaults()
 
         if self.player.y >= 0 and self.player.vy > 0:
             for coord in [player_left, player_bottom], [player_right, player_bottom]:
@@ -101,50 +103,62 @@ class App:
                 ]
                 if self.tilemap.matrix[floor_tile[1]][floor_tile[0]] != -1:
                     self.player.vy = 0
-                    self.player.y = (floor_tile[1] * self.tile_size) - self.player.height
+                    self.player.y = (floor_tile[1] * self.tile_size) - self.player.height - self.offset_y
                     self.player.grounded = True
                     break
                 else:
                     self.player.grounded = False
 
         elif self.player.y >= 0 and self.player.vy < 0:
-            for coord in [player_left, self.player.y], [player_right, self.player.y]:
+            for coord in [player_left, player_top], [player_right, player_top]:
                 ceiling_tile = [
                     coord[0] // self.tile_size,
                     (coord[1] + self.player.vy) // self.tile_size
                 ]
                 if self.tilemap.matrix[ceiling_tile[1]][ceiling_tile[0]] != -1:
                     self.player.vy = 0
-                    self.player.y = ceiling_tile[1] * self.tile_size + self.tile_size
+                    self.player.y = ceiling_tile[1] * self.tile_size + self.tile_size - self.offset_y
                     break
 
     def render_tiles(self, tilemap, colkey):
         # render the tileset based on self.tilemap's matrix.
         base_offset_x = self.offset_x // self.tile_size
         mod_offset_x = self.offset_x % self.tile_size
-        for idy, arr in enumerate(tilemap.matrix):
-            for idx, val in enumerate(arr[base_offset_x:base_offset_x+16]):
+        base_offset_y = self.offset_y // self.tile_size
+        mod_offset_y = self.offset_y % self.tile_size
+        for idy, arr in enumerate(tilemap.matrix[base_offset_y:base_offset_y+self.map_height+1]):
+            for idx, val in enumerate(arr[base_offset_x:base_offset_x+self.map_width+1]):
                 if val != -1:
                     x = idx*self.tile_size
                     y = idy*self.tile_size
                     sx = (val % self.tile_size) * self.tile_size
                     sy = (val // (256 // self.tile_size)) * self.tile_size
-                    pyxel.blt(x-mod_offset_x, y, 0, sx, sy, self.tile_size, self.tile_size, colkey)
+                    pyxel.blt(x-mod_offset_x, y-mod_offset_y, 0, sx, sy, self.tile_size, self.tile_size, colkey)
 
     def update_player(self):
         if self.player.vx < 0:
             if self.offset_x > 0 and self.player.x < pyxel.width // 2:
-                self.offset_x -= 2
+                self.offset_x += self.player.vx
             else:
                 self.player.x += self.player.vx
         elif self.player.vx > 0:
             if self.offset_x < pyxel.width and self.player.x > pyxel.width // 2:
-                self.offset_x += 2
+                self.offset_x += self.player.vx
             else:
                 self.player.x += self.player.vx
         self.player.vx = 0
+        if self.player.vy < 0:
+            if self.offset_y > 0 and self.player.y < pyxel.height // 2:
+                self.offset_y += self.player.vy
+            else:
+                self.player.y += self.player.vy
+        elif self.player.vy > 0:
+            if self.offset_y < pyxel.height and self.player.y > pyxel.height // 2:
+                self.offset_y += self.player.vy
+            else:
+                self.player.y += self.player.vy
 
-        self.player.y += self.player.vy
+        # self.player.y += self.player.vy
         self.player.vy = min(self.player.vy + 1, 8)
 
 
@@ -189,7 +203,8 @@ class Player():
                 frame_x = self.anim_w * (6 + ((pyxel.frame_count - self.zero_frame) // 4) % 6)
 
         pyxel.blt(self.x-1, self.y-5, 1, frame_x, 16, -self.direction*self.width+(3*-self.direction), self.height+5, 1)
-        # pyxel.rectb(self.x, self.y, self.x + self.width, self.y + self.height, 7)
+        # pyxel.rectb(self.x, self.y, self.x + self.width - 1, self.y + self.height - 1, 7)
+
 
 class Tilemap():
     def __init__(self, matrix, mutable=False):

@@ -28,6 +28,21 @@ class Level():
         # TODO: Create one more layer for spawns and checkpoints, then read those into memory and set
         # spawn and checkpoints for the player.
 
+    def render(self, offset_x, offset_y, tilemap, colkey, height_in_tiles, width_in_tiles):
+        # render the tileset based on collision's matrix.
+        base_offset_x = offset_x // self.tile_size
+        mod_offset_x = offset_x % self.tile_size
+        base_offset_y = offset_y // self.tile_size
+        mod_offset_y = offset_y % self.tile_size
+        for idy, arr in enumerate(tilemap.matrix[base_offset_y:base_offset_y+height_in_tiles+1]):
+            for idx, val in enumerate(arr[base_offset_x:base_offset_x+width_in_tiles+1]):
+                if val != -1:
+                    x = idx*self.tile_size
+                    y = idy*self.tile_size
+                    sx = (val % self.tile_size) * self.tile_size
+                    sy = (val // (256 // self.tile_size)) * self.tile_size
+                    pyxel.blt(x-mod_offset_x, y-mod_offset_y, 0, sx, sy, self.tile_size, self.tile_size, colkey)
+
 def build_tilemap(map_file, layer):
     matrix = []
     with open(map_file, 'r') as data:

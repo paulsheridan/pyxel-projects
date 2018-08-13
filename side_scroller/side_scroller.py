@@ -14,8 +14,8 @@ class App:
 
         self.offset_x = 0
         self.offset_y = 0
-        self.tile_height = pyxel.height // self.level.tile_size
-        self.tile_width = pyxel.width // self.level.tile_size
+        self.height_in_tiles = pyxel.height // self.level.tile_size
+        self.width_in_tiles = pyxel.width // self.level.tile_size
 
         assets = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), 'assets'))
         pyxel.image(0).load(0, 0, '{}/tile_test2.png'.format(assets))
@@ -50,87 +50,10 @@ class App:
     def draw(self):
         pyxel.cls(1)
         pyxel.blt(0, 0, 2, 0, 0, 240, 100, 1)
-        self.render_tiles(self.level.background, 1)
-        self.render_tiles(self.level.collision, 1)
+        self.level.render(self.offset_x, self.offset_y, self.level.background, 1, self.height_in_tiles, self.width_in_tiles)
+        self.level.render(self.offset_x, self.offset_y, self.level.collision, 1, self.height_in_tiles, self.width_in_tiles)
         self.player.render()
-        self.render_tiles(self.level.foreground, 1)
-
-    def set_coll_defaults(self):
-        # player coordinates are base 0, so the distance right and down from the 0th element
-        # of the player sprite has to be decremented by 1
-        player_top = self.player.y + self.offset_y
-        player_bottom = self.player.y + self.offset_y + self.player.height - 1
-        player_right = self.player.x + self.offset_x + self.player.width - 1
-        player_left = self.player.x + self.offset_x
-        return player_top, player_bottom, player_right, player_left
-
-    def x_collision(self):
-        player_top, player_bottom, player_right, player_left = self.set_coll_defaults()
-
-        if self.player.vx < 0:
-            for coord in [player_left, player_top], [player_left, player_bottom]:
-                left_tile = [
-                    (coord[0] + self.player.vx) // self.level.tile_size,
-                    coord[1] // self.level.tile_size
-                ]
-                if self.level.collision.matrix[left_tile[1]][left_tile[0]] != -1:
-                    self.player.x = (left_tile[0] * self.level.tile_size) + self.level.tile_size - self.offset_x
-                    # self.player.set_test(self.player.x, self.player.y, self.player.x + self.player.width, self.player.y + self.player.height)
-                    break
-
-        if self.player.vx > 0:
-            for coord in [player_right, player_top], [player_right, player_bottom]:
-                right_tile = [
-                    (coord[0] + self.player.vx) // self.level.tile_size,
-                    coord[1] // self.level.tile_size
-                ]
-                if self.level.collision.matrix[right_tile[1]][right_tile[0]] != -1:
-                    self.player.x = (right_tile[0] * self.level.tile_size) - self.player.width - self.offset_x
-                    break
-
-    def y_collision(self):
-        player_top, player_bottom, player_right, player_left = self.set_coll_defaults()
-
-        if self.player.y >= 0 and self.player.vy > 0:
-            for coord in [player_left, player_bottom], [player_right, player_bottom]:
-                floor_tile = [
-                    coord[0] // self.level.tile_size,
-                    (coord[1] + self.player.vy) // self.level.tile_size
-                ]
-                if self.level.collision.matrix[floor_tile[1]][floor_tile[0]] != -1:
-                    self.player.vy = 0
-                    self.player.y = (floor_tile[1] * self.level.tile_size) - self.player.height - self.offset_y
-                    self.player.grounded = True
-                    # self.player.set_test(self.player.x, self.player.y, self.player.x + self.player.width, self.player.y + self.player.height)
-                    break
-                else:
-                    self.player.grounded = False
-
-        elif self.player.y >= 0 and self.player.vy < 0:
-            for coord in [player_left, player_top], [player_right, player_top]:
-                ceiling_tile = [
-                    coord[0] // self.level.tile_size,
-                    (coord[1] + self.player.vy) // self.level.tile_size
-                ]
-                if self.level.collision.matrix[ceiling_tile[1]][ceiling_tile[0]] != -1:
-                    self.player.vy = 0
-                    self.player.y = ceiling_tile[1] * self.level.tile_size + self.level.tile_size - self.offset_y
-                    break
-
-    def render_tiles(self, tilemap, colkey):
-        # render the tileset based on self.level.collision's matrix.
-        base_offset_x = self.offset_x // self.level.tile_size
-        mod_offset_x = self.offset_x % self.level.tile_size
-        base_offset_y = self.offset_y // self.level.tile_size
-        mod_offset_y = self.offset_y % self.level.tile_size
-        for idy, arr in enumerate(tilemap.matrix[base_offset_y:base_offset_y+self.tile_height+1]):
-            for idx, val in enumerate(arr[base_offset_x:base_offset_x+self.tile_width+1]):
-                if val != -1:
-                    x = idx*self.level.tile_size
-                    y = idy*self.level.tile_size
-                    sx = (val % self.level.tile_size) * self.level.tile_size
-                    sy = (val // (256 // self.level.tile_size)) * self.level.tile_size
-                    pyxel.blt(x-mod_offset_x, y-mod_offset_y, 0, sx, sy, self.level.tile_size, self.level.tile_size, colkey)
+        self.level.render(self.offset_x, self.offset_y, self.level.foreground, 1, self.height_in_tiles, self.width_in_tiles)
 
     def update_player(self):
         if self.player.vx < 0:
@@ -147,7 +70,8 @@ class App:
                 self.offset_x += self.player.vx
             else:
                 self.player.x += self.player.vx
-        self.x_collision()
+        self.player.x_collision(self.offset_x, self.offset_y, self.level.collision.matrix, self.level.tile_size)
+
         if self.player.vx > 0:
             self.player.vx = self.player.vx - 1
         elif self.player.vx < 0:
@@ -167,11 +91,9 @@ class App:
                 self.offset_y += self.player.vy
             else:
                 self.player.y += self.player.vy
-        self.y_collision()
+        self.player.y_collision(self.offset_x, self.offset_y, self.level.collision.matrix, self.level.tile_size)
 
         self.player.vy = min(self.player.vy + 1, 7)
-        if self.player.jump_chg > 5:
-            self.player.jump_charge_emitter.sparkle(-4)
 
 
 App()

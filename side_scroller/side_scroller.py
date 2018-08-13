@@ -3,6 +3,8 @@ import pyxel
 
 from random import randint
 from itertools import islice
+from player import Player
+from level import Level
 
 
 class App:
@@ -12,10 +14,8 @@ class App:
 
         self.offset_x = 0
         self.offset_y = 0
-        self.view_height = pyxel.height // self.level.tile_size
-        self.view_width = pyxel.width // self.level.tile_size
-
-        self.particles = []
+        self.tile_height = pyxel.height // self.level.tile_size
+        self.tile_width = pyxel.width // self.level.tile_size
 
         assets = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), 'assets'))
         pyxel.image(0).load(0, 0, '{}/tile_test2.png'.format(assets))
@@ -54,11 +54,6 @@ class App:
         self.render_tiles(self.level.collision, 1)
         self.player.render()
         self.render_tiles(self.level.foreground, 1)
-        for idx, particle in enumerate(self.player.particles):
-            if particle['end_frame'] >= pyxel.frame_count:
-                self.player.particles.pop(idx)
-            else:
-                pyxel.pix(particle['x']+self.offset_x, particle['y']+self.offset_y, particle['color'])
 
     def set_coll_defaults(self):
         # player coordinates are base 0, so the distance right and down from the 0th element
@@ -128,8 +123,8 @@ class App:
         mod_offset_x = self.offset_x % self.level.tile_size
         base_offset_y = self.offset_y // self.level.tile_size
         mod_offset_y = self.offset_y % self.level.tile_size
-        for idy, arr in enumerate(tilemap.matrix[base_offset_y:base_offset_y+self.view_height+1]):
-            for idx, val in enumerate(arr[base_offset_x:base_offset_x+self.view_width+1]):
+        for idy, arr in enumerate(tilemap.matrix[base_offset_y:base_offset_y+self.tile_height+1]):
+            for idx, val in enumerate(arr[base_offset_x:base_offset_x+self.tile_width+1]):
                 if val != -1:
                     x = idx*self.level.tile_size
                     y = idy*self.level.tile_size
@@ -175,117 +170,8 @@ class App:
         self.y_collision()
 
         self.player.vy = min(self.player.vy + 1, 7)
-
-
-class Player():
-    def __init__(self):
-        self.height = 11
-        self.width = 8
-
-        self.test_left = 0
-        self.test_right = 0
-        self.test_up = 0
-        self.test_down = 0
-
-        self.x = 72
-        self.y = -16
-        self.vx = 0
-        self.vy = 0
-        self.grounded = False
-        self.direction = 1
-        self.jump_chg = 0
-
-        self.anim_w = 11
-        self.anim_zero_frame = 0
-        self.particles = []
-
-    def charge(self):
-        self.jump_chg = min(self.jump_chg + 1, 6)
-        print(self.jump_chg)
-
-    def sparkle(self):
-        for _ in range(randint(1, 3)):
-            self.particles.append({
-                'end_frame': pyxel.frame_count + randint(0, 30),
-                'x': self.x + randint(-self.height // 2, self.height // 2),
-                'y': self.y + randint(-self.width // 2, self.width // 2),
-                'color': 12,
-            })
-
-    def jump(self):
-        self.vy = -self.jump_chg - 8
-        self.grounded = False
-        # if self.jump_chg > 5:
-        #     self.sparkle()
-        self.jump_chg = 0
-
-    def run(self, direction):
-        self.direction = direction
-        self.vx = 3 * direction
-
-    def set_test(self, left, up, right, down):
-        self.test_left = left
-        self.test_right = right
-        self.test_up = up
-        self.test_down = down
-
-    def render(self):
-        frame_x = self.anim_w * 7
-        if not self.grounded:
-            if self.vy >= 0:
-                frame_x = self.anim_w * 13
-            else:
-                frame_x = self.anim_w * 12
-        else:
-            if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.KEY_D):
-                if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.KEY_D):
-                    self.anim_zero_frame = pyxel.frame_count
-                frame_x = self.anim_w * (((pyxel.frame_count - self.anim_zero_frame) // 4) % 6)
-            else:
-                if pyxel.btnr(pyxel.KEY_A) or pyxel.btnr(pyxel.KEY_D):
-                    self.anim_zero_frame = pyxel.frame_count
-                frame_x = self.anim_w * (6 + ((pyxel.frame_count - self.anim_zero_frame) // 4) % 6)
-
-        # TODO: make the rendering offset between player collision box and the image blt dynamic based on frame size and hit box size
-        pyxel.blt(self.x-1, self.y-5, 1, frame_x, 16, -self.direction*self.width+(3*-self.direction), self.height+5, 1)
-        # pyxel.rectb(self.test_left, self.test_up, self.test_right, self.test_down, 7)
-
-
-class Tilemap():
-    def __init__(self, matrix, mutable=False):
-        self.matrix = matrix
-        self.mutable = mutable
-
-    def update_tile(self, x, y, val):
-        if self.mutable:
-            self.matrix[x][y] = val
-
-
-class Level():
-    def __init__(self, map_file, tile_size):
-        assets = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), 'assets'))
-        self.collision = Tilemap(self.build_tilemap('{}/{}'.format(assets, map_file), 'layer 1'))
-        self.foreground = Tilemap(self.build_tilemap('{}/{}'.format(assets, map_file), 'layer 2'), True)
-        self.background = Tilemap(self.build_tilemap('{}/{}'.format(assets, map_file), 'layer 0'), True)
-        self.tile_size = tile_size
-        self.map_width = len(self.collision.matrix[0])
-        self.map_height = len(self.collision.matrix)
-
-        # TODO: Create one more layer for spawns and checkpoints, then read those into memory and set
-        # spawn and checkpoints for the player.
-
-    def build_tilemap(self, map_file, layer):
-        matrix = []
-        with open(map_file, 'r') as data:
-            for line in data:
-                if layer in line:
-                    break
-            for line_after in data:
-                if not line_after.strip():
-                    break
-                else:
-                    matrix.append([int(x) for x in line_after.strip().rstrip(',').split(',')])
-        return matrix
+        if self.player.jump_chg > 5:
+            self.player.jump_charge_emitter.sparkle(-4)
 
 
 App()

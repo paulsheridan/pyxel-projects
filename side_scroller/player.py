@@ -1,7 +1,6 @@
 import pyxel
 
 from random import randint
-from particle_emitter import ParticleEmitter
 
 
 class Player():
@@ -10,7 +9,7 @@ class Player():
         self.width = 8
 
         self.x = 72
-        self.y = -16
+        self.y = 60
         self.vx = 0
         self.vy = 0
 
@@ -21,10 +20,8 @@ class Player():
         self.anim_w = 11
         self.anim_zero_frame = 0
 
-        self.jump_charge_emitter = ParticleEmitter(self.x, self.y)
-
     def charge(self):
-        self.jump_chg = min(self.jump_chg + 1, 6)
+        self.jump_chg = min(self.jump_chg + 1, 4)
 
     def jump(self):
         self.vy = -self.jump_chg - 8
@@ -34,12 +31,6 @@ class Player():
     def run(self, direction):
         self.direction = direction
         self.vx = 2 * direction
-
-    def set_test(self, left, up, right, down):
-        self.test_left = left
-        self.test_right = right
-        self.test_up = up
-        self.test_down = down
 
 
     def set_coll_defaults(self, offset_x, offset_y):
@@ -118,10 +109,6 @@ class Player():
                 if pyxel.btnr(pyxel.KEY_A) or pyxel.btnr(pyxel.KEY_D):
                     self.anim_zero_frame = pyxel.frame_count
                 frame_x = self.anim_w * (6 + ((pyxel.frame_count - self.anim_zero_frame) // 4) % 6)
-        self.jump_charge_emitter.update_position(self.x, self.y)
-        if self.jump_chg > 5:
-            self.jump_charge_emitter.sparkle(-4)
-        self.jump_charge_emitter.render_particles()
 
         # TODO: make the rendering offset between player collision box
         # and the image blt dynamic based on frame size and hit box size

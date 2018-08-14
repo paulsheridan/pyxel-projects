@@ -5,16 +5,6 @@ from random import randint
 from itertools import islice
 
 
-class Tilemap():
-    def __init__(self, matrix, mutable=False):
-        self.matrix = matrix
-        self.mutable = mutable
-
-    def update_tile(self, x, y, val):
-        if self.mutable:
-            self.matrix[x][y] = val
-
-
 class Level():
     def __init__(self, asset_dir, map_file, tile_size):
         self.tile_size = tile_size
@@ -31,9 +21,7 @@ class Level():
         # spawn and checkpoints for the player.
 
     def render(self, camera, tilemap, colkey):
-        # TODO: group elements related to offset and pass that in, or pass in player itself.
-        # this will largely happen in the game app so it should be straightforward
-        # render the tileset based on collision's matrix.
+        # render the tileset based on each Tilemap's matrix.
         base_offset_x = camera.offset_x // self.tile_size
         mod_offset_x = camera.offset_x % self.tile_size
         base_offset_y = camera.offset_y // self.tile_size
@@ -46,6 +34,17 @@ class Level():
                     sx = (val % self.tile_size) * self.tile_size
                     sy = (val // (256 // self.tile_size)) * self.tile_size
                     pyxel.blt(x-mod_offset_x, y-mod_offset_y, 1, sx, sy, self.tile_size, self.tile_size, colkey)
+
+
+class Tilemap():
+    def __init__(self, matrix, mutable=False):
+        self.matrix = matrix
+        self.mutable = mutable
+
+    def update_tile(self, x, y, val):
+        if self.mutable:
+            self.matrix[x][y] = val
+
 
 def build_tilemap(map_file, layer):
     matrix = []

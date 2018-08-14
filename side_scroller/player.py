@@ -33,50 +33,50 @@ class Player():
         self.vx = 2 * direction
 
 
-    def set_coll_defaults(self, offset_x, offset_y):
+    def set_coll_defaults(self, camera):
         # player coordinates are base 0, so the distance right and down from the 0th element
         # of the player sprite has to be decremented by 1
-        player_top = self.y + offset_y
-        player_bottom = self.y + offset_y + self.height - 1
-        player_right = self.x + offset_x + self.width - 1
-        player_left = self.x + offset_x
+        player_top = self.y + camera.offset_y
+        player_bottom = self.y + camera.offset_y + self.height - 1
+        player_right = self.x + camera.offset_x + self.width - 1
+        player_left = self.x + camera.offset_x
         return player_top, player_bottom, player_right, player_left
 
-    def x_collision(self, offset_x, offset_y, coll_matrix, tile_size):
-        player_top, player_bottom, player_right, player_left = self.set_coll_defaults(offset_x, offset_y)
+    def x_collision(self, camera, level):
+        player_top, player_bottom, player_right, player_left = self.set_coll_defaults(camera)
 
         if self.vx < 0:
             for coord in [player_left, player_top], [player_left, player_bottom]:
                 left_tile = [
-                    (coord[0] + self.vx) // tile_size,
-                    coord[1] // tile_size
+                    (coord[0] + self.vx) // level.tile_size,
+                    coord[1] // level.tile_size
                 ]
-                if coll_matrix[left_tile[1]][left_tile[0]] != -1:
-                    self.x = (left_tile[0] * tile_size) + tile_size - offset_x
+                if level.collision.matrix[left_tile[1]][left_tile[0]] != -1:
+                    self.x = (left_tile[0] * level.tile_size) + level.tile_size - camera.offset_x
                     break
 
         if self.vx > 0:
             for coord in [player_right, player_top], [player_right, player_bottom]:
                 right_tile = [
-                    (coord[0] + self.vx) // tile_size,
-                    coord[1] // tile_size
+                    (coord[0] + self.vx) // level.tile_size,
+                    coord[1] // level.tile_size
                 ]
-                if coll_matrix[right_tile[1]][right_tile[0]] != -1:
-                    self.x = (right_tile[0] * tile_size) - self.width - offset_x
+                if level.collision.matrix[right_tile[1]][right_tile[0]] != -1:
+                    self.x = (right_tile[0] * level.tile_size) - self.width - camera.offset_x
                     break
 
-    def y_collision(self, offset_x, offset_y, coll_matrix, tile_size):
-        player_top, player_bottom, player_right, player_left = self.set_coll_defaults(offset_x, offset_y)
+    def y_collision(self, camera, level):
+        player_top, player_bottom, player_right, player_left = self.set_coll_defaults(camera)
 
         if self.y >= 0 and self.vy > 0:
             for coord in [player_left, player_bottom], [player_right, player_bottom]:
                 floor_tile = [
-                    coord[0] // tile_size,
-                    (coord[1] + self.vy) // tile_size
+                    coord[0] // level.tile_size,
+                    (coord[1] + self.vy) // level.tile_size
                 ]
-                if coll_matrix[floor_tile[1]][floor_tile[0]] != -1:
+                if level.collision.matrix[floor_tile[1]][floor_tile[0]] != -1:
                     self.vy = 0
-                    self.y = (floor_tile[1] * tile_size) - self.height - offset_y
+                    self.y = (floor_tile[1] * level.tile_size) - self.height - camera.offset_y
                     self.grounded = True
                     break
                 else:
@@ -85,12 +85,12 @@ class Player():
         elif self.y >= 0 and self.vy < 0:
             for coord in [player_left, player_top], [player_right, player_top]:
                 ceiling_tile = [
-                    coord[0] // tile_size,
-                    (coord[1] + self.vy) // tile_size
+                    coord[0] // level.tile_size,
+                    (coord[1] + self.vy) // level.tile_size
                 ]
-                if coll_matrix[ceiling_tile[1]][ceiling_tile[0]] != -1:
+                if level.collision.matrix[ceiling_tile[1]][ceiling_tile[0]] != -1:
                     self.vy = 0
-                    self.y = ceiling_tile[1] * tile_size + tile_size - offset_y
+                    self.y = ceiling_tile[1] * level.tile_size + level.tile_size - camera.offset_y
                     break
 
     def render(self):

@@ -28,23 +28,10 @@ class App:
 
         self.level = Level(self.assets, 'mapfile.txt', 16)
         self.camera = Camera(self.level)
+        self.player = Player()
+        self.sparkle_emitter = ParticleEmitter(self.player)
 
         self.test_val = 0
-
-        # self.offset_x = 0
-        # self.offset_y = 0
-        # self.last_offset_x = 0
-        # self.last_offset_y = 0
-        #
-        # self.max_scroll_x = self.level.map_width * self.level.tile_size - pyxel.width
-        # self.max_scroll_y = self.level.map_height * self.level.tile_size - pyxel.height
-        #
-        # self.height_in_tiles = pyxel.height // self.level.tile_size
-        # self.width_in_tiles = pyxel.width // self.level.tile_size
-
-        self.player = Player()
-        self.jump_charge_emitter = ParticleEmitter(self.player)
-
         pyxel.run(self.update, self.draw)
 
     def update(self):
@@ -81,7 +68,7 @@ class App:
         self.level.render(self.camera, self.level.background, 1)
         self.level.render(self.camera, self.level.collision, 1)
         self.player.render()
-        self.jump_charge_emitter.render_particles()
+        self.sparkle_emitter.render_particles()
         self.level.render(self.camera, self.level.foreground, 1)
 
     def update_player(self):
@@ -99,7 +86,7 @@ class App:
                 self.camera.offset_x += self.player.vx
             else:
                 self.player.x += self.player.vx
-        self.player.x_collision(self.camera.offset_x, self.camera.offset_y, self.level.collision.matrix, self.level.tile_size)
+        self.player.x_collision(self.camera, self.level)
 
         if self.player.vy < 0:
             if self.camera.offset_y < abs(self.player.vy):
@@ -114,9 +101,9 @@ class App:
                 self.camera.offset_y += self.player.vy
             else:
                 self.player.y += self.player.vy
-        self.player.y_collision(self.camera.offset_x, self.camera.offset_y, self.level.collision.matrix, self.level.tile_size)
+        self.player.y_collision(self.camera, self.level)
 
-        self.jump_charge_emitter.update_position(self.offset_delta())
+        self.sparkle_emitter.update_position(self.offset_delta())
         self.player.vy = min(self.player.vy + 1, 7)
         if self.player.vx > 0:
             self.player.vx = self.player.vx - 1
@@ -124,7 +111,7 @@ class App:
             self.player.vx = self.player.vx + 1
 
         if self.player.jump_chg >= 4:
-            self.jump_charge_emitter.sparkle(self.test_val)
+            self.sparkle_emitter.sparkle(self.test_val)
 
     def offset_delta(self):
         return self.camera.offset_x - self.camera.last_offset_x, self.camera.offset_y - self.camera.last_offset_y

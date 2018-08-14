@@ -42,7 +42,8 @@ class App:
         # if pyxel.btn(pyxel.KEY_O):
         #     self.test_val -= 1
         if pyxel.btnp(pyxel.KEY_S, 30, 30):
-            self.player.charge()
+            if self.player.grounded:
+                self.player.charge()
         if pyxel.btn(pyxel.KEY_SPACE):
             if self.player.grounded:
                 self.player.jump()

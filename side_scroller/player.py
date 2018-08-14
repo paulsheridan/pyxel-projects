@@ -1,8 +1,5 @@
 import pyxel
 
-from random import randint
-
-
 class Player():
     def __init__(self):
         self.height = 11

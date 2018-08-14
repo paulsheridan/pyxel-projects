@@ -15,11 +15,14 @@ class App:
 
         self.levelname = 'level2'
         self.assets_dir = 'assets'
-        self.assets = os.path.realpath(os.path.join(
-            os.getcwd(),
-            os.path.dirname(__file__),
-            self.assets_dir,
-            self.levelname))
+        self.assets = os.path.realpath(
+            os.path.join(
+                os.getcwd(),
+                os.path.dirname(__file__),
+                self.assets_dir,
+                self.levelname
+            )
+        )
 
         pyxel.image(0).load(0, 0, os.path.join(self.assets, '../animation.png'))
         pyxel.image(1).load(0, 0, os.path.join(self.assets, 'tileset.png'))

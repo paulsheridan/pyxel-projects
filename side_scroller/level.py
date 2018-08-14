@@ -22,18 +22,18 @@ class Level():
 
     def render(self, camera, tilemap, colkey):
         # render the tileset based on each Tilemap's matrix.
-        base_offset_x = camera.offset_x // self.tile_size
+        base_x = camera.offset_x // self.tile_size
         mod_offset_x = camera.offset_x % self.tile_size
-        base_offset_y = camera.offset_y // self.tile_size
+        base_y = camera.offset_y // self.tile_size
         mod_offset_y = camera.offset_y % self.tile_size
-        for idy, arr in enumerate(tilemap.matrix[base_offset_y:base_offset_y+camera.height_in_tiles+1]):
-            for idx, val in enumerate(arr[base_offset_x:base_offset_x+camera.width_in_tiles+1]):
+        for idy, arr in enumerate(tilemap.matrix[base_y:base_y+camera.height_in_tiles+1]):
+            for idx, val in enumerate(arr[base_x:base_x+camera.width_in_tiles+1]):
                 if val != -1:
-                    x = idx*self.tile_size
-                    y = idy*self.tile_size
+                    x = idx * self.tile_size - mod_offset_x
+                    y = idy * self.tile_size - mod_offset_y
                     sx = (val % self.tile_size) * self.tile_size
                     sy = (val // (256 // self.tile_size)) * self.tile_size
-                    pyxel.blt(x-mod_offset_x, y-mod_offset_y, 1, sx, sy, self.tile_size, self.tile_size, colkey)
+                    pyxel.blt(x, y, 1, sx, sy, self.tile_size, self.tile_size, colkey)
 
 
 class Tilemap():

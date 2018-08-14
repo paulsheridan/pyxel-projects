@@ -112,4 +112,4 @@ class Player():
 
         # TODO: make the rendering offset between player collision box
         # and the image blt dynamic based on frame size and hit box size
-        pyxel.blt(self.x-1, self.y-5, 1, frame_x, 16, -self.direction*self.width+(3*-self.direction), self.height+5, 1)
+        pyxel.blt(self.x-1, self.y-5, 0, frame_x, 16, -self.direction*self.width+(3*-self.direction), self.height+5, 1)

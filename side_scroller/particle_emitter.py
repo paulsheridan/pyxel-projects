@@ -4,26 +4,22 @@ from random import randint
 
 
 class ParticleEmitter():
-    def __init__(self, x, y, on=False):
-        self.on = on
-        self.x = x
-        self.y = y
+    def __init__(self, anchor):
+        self.anchor = anchor
         self.spawn_area = 8, 12
         self.particles = []
 
-    def update_position(self, x, y, delta):
-        self.x = x
-        self.y = y
+    def update_position(self, delta):
         for particle in self.particles:
-            particle['x'] -= delta[0]
+            particle['x'] -= delta[0] + particle['v']
             particle['y'] -= delta[1]
 
     def sparkle(self, v):
         if pyxel.frame_count % 2 == 0:
             self.particles.append({
                 'zero_frame': pyxel.frame_count,
-                'x': randint(self.x-2, self.x+self.spawn_area[0]),
-                'y': randint(self.y-2, self.y+self.spawn_area[1]),
+                'x': randint(self.anchor.x-2, self.anchor.x+self.spawn_area[0]),
+                'y': randint(self.anchor.y-2, self.anchor.y+self.spawn_area[1]),
                 'color': randint(8, 14),
                 'v': v
             })

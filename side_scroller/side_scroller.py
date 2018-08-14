@@ -58,13 +58,14 @@ class App:
         if pyxel.btn(pyxel.KEY_P):
             import pdb; pdb.set_trace()
 
+        self.camera.last_offset_x, self.camera.last_offset_y = self.camera.offset_x, self.camera.offset_y
         self.update_player()
 
     def draw(self):
         pyxel.cls(1)
         pyxel.blt(0, 0, 2, 0, 0, 240, 70, 1)
-        # for i in range(2):
-        #     pyxel.blt(i * 240 - self.camera.offset_x/30, 92, 2, 0, 82, 240, 82, 1)
+        for i in range(2):
+            pyxel.blt(i * 240 - self.camera.offset_x/30, 92, 2, 0, 82, 240, 82, 1)
         self.level.render(self.camera, self.level.background, 1)
         self.level.render(self.camera, self.level.collision, 1)
         self.player.render()
@@ -72,38 +73,26 @@ class App:
         self.level.render(self.camera, self.level.foreground, 1)
 
     def update_player(self):
-        self.camera.last_offset_x, self.camera.last_offset_y = self.camera.offset_x, self.camera.offset_y
-        if self.player.vx < 0:
-            if self.camera.offset_x < abs(self.player.vx):
-                self.camera.offset_x = 0
-                self.player.x += self.player.vx
-            elif self.camera.offset_x > 0 and self.player.x < pyxel.width // 2:
-                self.camera.offset_x += self.player.vx
-            else:
-                self.player.x += self.player.vx
-        elif self.player.vx > 0:
-            if self.camera.offset_x < self.camera.max_scroll_x and self.player.x > pyxel.width // 2:
-                self.camera.offset_x += self.player.vx
-            else:
-                self.player.x += self.player.vx
+        self.player.x, self.camera.offset_x = update_axis(
+            self.player.x,
+            self.player.vx,
+            self.camera.offset_x,
+            self.camera.max_scroll_x,
+            pyxel.width,
+        )
         self.player.x_collision(self.camera, self.level)
 
-        if self.player.vy < 0:
-            if self.camera.offset_y < abs(self.player.vy):
-                self.camera.offset_y = 0
-                self.player.y += self.player.vy
-            elif self.camera.offset_y > 0 and self.player.y < pyxel.height // 2:
-                self.camera.offset_y += self.player.vy
-            else:
-                self.player.y += self.player.vy
-        elif self.player.vy > 0:
-            if self.camera.offset_y < self.camera.max_scroll_y and self.player.y > pyxel.height // 2:
-                self.camera.offset_y += self.player.vy
-            else:
-                self.player.y += self.player.vy
+        self.player.y, self.camera.offset_y = update_axis(
+            self.player.y,
+            self.player.vy,
+            self.camera.offset_y,
+            self.camera.max_scroll_y,
+            pyxel.height,
+        )
         self.player.y_collision(self.camera, self.level)
 
         self.sparkle_emitter.update_position(self.offset_delta())
+
         self.player.vy = min(self.player.vy + 1, 7)
         if self.player.vx > 0:
             self.player.vx = self.player.vx - 1
@@ -115,6 +104,23 @@ class App:
 
     def offset_delta(self):
         return self.camera.offset_x - self.camera.last_offset_x, self.camera.offset_y - self.camera.last_offset_y
+
+
+def update_axis(pos, vel, offset, max_scroll, viewport):
+    if vel < 0:
+        if offset < abs(vel):
+            offset = 0
+            pos += vel
+        elif offset > 0 and pos < viewport // 2:
+            offset += vel
+        else:
+            pos += vel
+    elif vel > 0:
+        if offset < max_scroll and pos > viewport // 2:
+            offset += vel
+        else:
+            pos += vel
+    return pos, offset
 
 
 App()

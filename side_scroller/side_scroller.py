@@ -68,11 +68,12 @@ class App:
     def draw(self):
         pyxel.cls(1)
         pyxel.blt(0, 0, 2, 0, 0, 240, 70, 1)
+        # render the city
         for i in range(2):
-            pyxel.blt(i * 240 - self.camera.offset_x/20, 39, 2, 0, 82, 240, 82, 1)
+            pyxel.blt(i * 240 - self.camera.offset_x/2, 39, 2, 0, 82, 240, 82, 1)
+        # render the clouds
         for i in range(2):
             pyxel.blt(i * 240 - self.camera.offset_x/50, 10, 2, 0, 168, 240, 40, 1)
-        print(self.test_val)
         self.level.render(self.camera, self.level.background, 1)
         self.level.render(self.camera, self.level.collision, 1)
         self.player.render()
